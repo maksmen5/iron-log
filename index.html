@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"/>
+<title>Iron Log — Щоденник тренувань</title>
+
+<!-- PWA / iOS install metadata -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#0D0F14"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Iron Log"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="icon" href="icon-192.png"/>
+
+<style>
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#0D0F14; overscroll-behavior-y: none; }
+  body { font-family: -apple-system, "Inter", sans-serif; }
+  #root { min-height: 100vh; min-height: 100dvh; }
+  input, textarea, select, button { font-family: inherit; }
+  /* Respect iPhone notch / home indicator */
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  ::-webkit-scrollbar { display: none; }
+
+  #loading {
+    position: fixed; inset: 0; background: #0D0F14; color: #E8E4DC;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: -apple-system, sans-serif; z-index: 99999;
+  }
+  #loading .logo {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #FF6B1A, #E63946);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 8px;
+  }
+  #loading .spinner {
+    width: 28px; height: 28px; border: 3px solid #2A2E3A; border-top-color: #FF6B1A;
+    border-radius: 50%; animation: spin 0.8s linear infinite; margin-top: 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="logo">IRON LOG</div>
+  <div style="font-size:12px;color:#8890A4;">Завантаження...</div>
+  <div class="spinner"></div>
+</div>
+
+<div id="root"></div>
+
+<!-- React + ReactDOM (UMD builds, work fully offline once cached by the service worker) -->
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+<script src="vendor/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react" src="app.jsx"></script>
+
+<script>
+  window.addEventListener("DOMContentLoaded", function () {
+    // Babel-in-browser runs synchronously after parsing; give it a tick then hide loader
+    var tries = 0;
+    var check = setInterval(function () {
+      var root = document.getElementById("root");
+      tries++;
+      if (root && root.children.length > 0) {
+        var loader = document.getElementById("loading");
+        if (loader) loader.style.display = "none";
+        clearInterval(check);
+      } else if (tries > 100) {
+        clearInterval(check); // give up waiting after ~10s, but don't hide loader (real error)
+      }
+    }, 100);
+  });
+
+  // Register service worker for offline support + installability
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function (err) {
+        console.warn("Service worker registration failed:", err);
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
